@@ -22,7 +22,7 @@ class parallel_hash_map
     };
  
     private:
-        table _table;    // table of values stored in nodes
+        table *_table;   // table of values stored in nodes
         size_t _threads; // number of threads accessing the table
         void resize();   // function that resizes hash table to twice the size
     public:

@@ -5,15 +5,19 @@
 */
 parallel_hash_map::parallel_hash_map(size_t M)
 {
+    std::cout << "Allocating" << std::endl;
+    _table = new table;
+    
     // allocate table
-    _table.M = M;
-    _table.N = 0;
-    _table.buckets = new node*[_table.M]();
+    _table->M = M;
+    _table->N = 0;
+    _table->buckets = new node*[_table->M]();
 
     // record the number of threads
     _threads = 1;
 
     // TODO: ensure that M is a power of 2
+    std::cout << "Done Allocating" << std::endl;
 }
 
 /*
@@ -22,7 +26,7 @@ parallel_hash_map::parallel_hash_map(size_t M)
 parallel_hash_map::~parallel_hash_map()
 {
     // FIXME
-    delete[] _table.buckets;
+    delete[] _table->buckets;
 } 
 
 /*
@@ -33,14 +37,22 @@ void parallel_hash_map::insert(std::string key, int value)
 
    
     // determine if resize necessary
-    if(2*_table.N > _table.M)
+    if(2*_table->N > _table->M)
+    {
+        std::cout << "\nOriginal Map =" << std::endl;
+        print_buckets();
+        std::cout << "Original pointer = " << _table << "\n\n";
         resize();
+        std::cout << "After resize map = " << std::endl;
+        print_buckets();
+        std::cout << "After resize pointer = " << _table << "\n\n";
+    }
 
     // get hashes -- key_hash assumes M is a power of 2, uses fast modulus
-    size_t key_hash = std::hash<std::string>()(key) & (_table.M-1);
-    std::cout << "Attempting to insert at hash " << key_hash << std::endl;
-    std::cout << "When the current map is:" << std::endl;
-    print_buckets();
+    size_t key_hash = std::hash<std::string>()(key) & (_table->M-1);
+    //std::cout << "Attempting to insert at hash " << key_hash << std::endl;
+    //std::cout << "When the current map is:" << std::endl;
+    //print_buckets();
     size_t lock_hash = key_hash % _threads;
 
     // check to see if key already exisits in map
@@ -55,13 +67,13 @@ void parallel_hash_map::insert(std::string key, int value)
     // TODO: recheck if element exists
     
     // place element in linked list
-    node **iter_node = &_table.buckets[key_hash];
+    node **iter_node = &_table->buckets[key_hash];
     while(*iter_node != NULL)
         iter_node = &(*iter_node)->next;
 
     // place element in linked list
     *iter_node = new_node;
-    _table.N += 1;
+    _table->N += 1;
 
     // unset lock
     return;
@@ -73,9 +85,9 @@ void parallel_hash_map::insert(std::string key, int value)
 bool parallel_hash_map::contains(std::string key)
 {
     // get hash into table
-    size_t key_hash = std::hash<std::string>()(key) & (_table.M-1);
+    size_t key_hash = std::hash<std::string>()(key) & (_table->M-1);
 
-    node *iter_node = _table.buckets[key_hash];
+    node *iter_node = _table->buckets[key_hash];
     while(iter_node != NULL)
     {
         //FIXME: THIS IS THE PROBLEM
@@ -97,14 +109,15 @@ void parallel_hash_map::resize()
     std::cout << "Resizing" << std::endl;
 
     // allocate new hash map
-    parallel_hash_map new_map(2*_table.M);
-    std::cout << "Allocation:" << std::endl;
+    parallel_hash_map new_map(2*_table->M);
+    std::cout << "Allocated new map = " << std::endl;
     new_map.print_buckets();
+    std::cout << "Allocated new pointer = " << new_map._table << "\n\n";
 
     // fill map with key value pairs
-    for(int i=0; i<_table.M; i++)
+    for(int i=0; i<_table->M; i++)
     {
-        node *iter_node = _table.buckets[i];
+        node *iter_node = _table->buckets[i];
         while(iter_node != NULL)
         {
             std::string key = iter_node->key;
@@ -117,11 +130,15 @@ void parallel_hash_map::resize()
     // finally switch pointer
     std::cout << "New Map:" << std::endl;
     new_map.print_buckets();
-    table* old_table = &_table;
+    std::cout << "New map pointer = " << new_map._table << "\n\n";
+    
+    table* old_table = _table;
     _table = new_map._table;
+    std::cout << "table = " << _table << " , new table = " << new_map._table << std::endl;
     
     std::cout << "Coppied Map:" << std::endl;
     print_buckets();
+    std::cout << "Coppied map pointer = " << _table << "\n\n";
     
     // TODO: delete old table entries
 
@@ -135,9 +152,9 @@ void parallel_hash_map::resize()
 int parallel_hash_map::getVal(std::string key)
 {
     // TODO: optimize hashing
-    size_t key_hash = std::hash<std::string>()(key) & (_table.M-1);
+    size_t key_hash = std::hash<std::string>()(key) & (_table->M-1);
 
-    node *iter_node = _table.buckets[key_hash];
+    node *iter_node = _table->buckets[key_hash];
     while(iter_node != NULL)
         if(iter_node->key == key)
             return iter_node->value;
@@ -154,7 +171,7 @@ int parallel_hash_map::getVal(std::string key)
 */
 size_t parallel_hash_map::size()
 {
-    return _table.N;
+    return _table->N;
 }
 
 /*
@@ -163,11 +180,11 @@ size_t parallel_hash_map::size()
 std::string* parallel_hash_map::keys()
 {
     // allocate array of strings
-    std::string *keys = new std::string[_table.N];
+    std::string *keys = new std::string[_table->N];
     int ind = 0;
-    for(int i=0; i<_table.M; i++)
+    for(int i=0; i<_table->M; i++)
     {
-        node *iter_node = _table.buckets[i];
+        node *iter_node = _table->buckets[i];
         while(iter_node != NULL)
         {
             keys[ind] = iter_node->key;
@@ -184,11 +201,11 @@ std::string* parallel_hash_map::keys()
 int* parallel_hash_map::values()
 {
     // allocate array of strings
-    int *values = new int[_table.N];
+    int *values = new int[_table->N];
     int ind = 0;
-    for(int i=0; i<_table.M; i++)
+    for(int i=0; i<_table->M; i++)
     {
-        node *iter_node = _table.buckets[i];
+        node *iter_node = _table->buckets[i];
         while(iter_node != NULL)
         {
             values[ind] = iter_node->value;
@@ -202,11 +219,11 @@ int* parallel_hash_map::values()
 // TODO: Delete
 void parallel_hash_map::print_buckets()
 {
-    for(int i=0; i<_table.M; i++)
+    for(int i=0; i<_table->M; i++)
     {
-        if(_table.buckets[i] == NULL)
+        if(_table->buckets[i] == NULL)
             std::cout << i << " -> NULL" << std::endl;
         else
-            std::cout << i << " -> " << _table.buckets[i] << std::endl;
+            std::cout << i << " -> " << _table->buckets[i] << std::endl;
     }
 }

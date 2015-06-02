@@ -5,6 +5,7 @@ int main()
 {
     parallel_hash_map X = parallel_hash_map();
 
+    /*
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;
     std::cout << "This should be true ... " << std::endl;
@@ -16,7 +17,7 @@ int main()
     X.insert("goodbye", 4);
     std::cout << "This should be 4 ... " << std::endl;
     std::cout << X.getVal("goodbye") << std:: endl;
-    
+    */
 
     // timing studies
     clock_t t1, t2;
