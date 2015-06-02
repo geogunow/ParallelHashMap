@@ -21,7 +21,8 @@ parallel_hash_map::parallel_hash_map(size_t M)
 */
 parallel_hash_map::~parallel_hash_map()
 {
-   delete[] _table.buckets;
+    // FIXME
+    delete[] _table.buckets;
 } 
 
 /*
@@ -30,26 +31,22 @@ parallel_hash_map::~parallel_hash_map()
 void parallel_hash_map::insert(std::string key, int value)
 {
 
-    // check to see if key already exisits in map
-    if(this->contains(key))
-        return;
-    
-    // FIXME
-    bool resizing = false;
-
+   
     // determine if resize necessary
     if(2*_table.N > _table.M)
-    {
-        // TODO: remember to unlock first?
-        this->resize();
-        resizing = true;
-    }
+        resize();
 
     // get hashes -- key_hash assumes M is a power of 2, uses fast modulus
     size_t key_hash = std::hash<std::string>()(key) & (_table.M-1);
-    std::cout << "Inserting key " << key_hash << std::endl;
+    std::cout << "Attempting to insert at hash " << key_hash << std::endl;
+    std::cout << "When the current map is:" << std::endl;
+    print_buckets();
     size_t lock_hash = key_hash % _threads;
 
+    // check to see if key already exisits in map
+    if(contains(key))
+        return;
+ 
     // create new node
     node *new_node = new node(key, value);
 
@@ -77,7 +74,6 @@ bool parallel_hash_map::contains(std::string key)
 {
     // get hash into table
     size_t key_hash = std::hash<std::string>()(key) & (_table.M-1);
-    std::cout << "Looking for key hash " << key_hash << std::endl;
 
     node *iter_node = _table.buckets[key_hash];
     while(iter_node != NULL)
@@ -97,20 +93,18 @@ bool parallel_hash_map::contains(std::string key)
 */
 void parallel_hash_map::resize()
 {
-    std::cout << "PRINTING PRIOR BUCKETS" << std::endl;
-    this->print_buckets();
-    std::cout << "Resizing" << std::endl;
     // TODO: acquire all locks first
+    std::cout << "Resizing" << std::endl;
 
     // allocate new hash map
     parallel_hash_map new_map(2*_table.M);
+    std::cout << "Allocation:" << std::endl;
+    new_map.print_buckets();
 
     // fill map with key value pairs
     for(int i=0; i<_table.M; i++)
     {
         node *iter_node = _table.buckets[i];
-        if(iter_node == NULL)
-            std::cout << "NULL at " << i << std::endl;
         while(iter_node != NULL)
         {
             std::string key = iter_node->key;
@@ -121,9 +115,15 @@ void parallel_hash_map::resize()
     }
 
     // finally switch pointer
-    this = &new_map;
-    std::cout << "PRINTING POST BUCKETS" << std::endl;
-    this->print_buckets();
+    std::cout << "New Map:" << std::endl;
+    new_map.print_buckets();
+    table* old_table = &_table;
+    _table = new_map._table;
+    
+    std::cout << "Coppied Map:" << std::endl;
+    print_buckets();
+    
+    // TODO: delete old table entries
 
     // TODO: release all locks
     return;

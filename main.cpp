@@ -39,11 +39,8 @@ int main()
         std::string key = base_string;
         key += ext;
         
-        std::cout << "Attempting to insert " << i << std::endl;
+        std::cout << "Iteration = " << i << std::endl;
         X.insert(key, i);
-        if(i==32)
-            X.print_buckets();
-        //std::cout << "Inserted " << i << " just fine" << std::endl;
     }
     for(int i=0; i<len; i++)
     {
