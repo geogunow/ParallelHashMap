@@ -220,14 +220,25 @@ void fixed_hash_map::print_buckets()
  * @brief Constructor for generates initial underlying table as a fixed-sized 
  *          hash map and intializes concurrency structures.
  */
-parallel_hash_map::parallel_hash_map(size_t M)
+parallel_hash_map::parallel_hash_map(size_t M, size_t L)
 {
+    //TODO: check that L is a power of 2 (round up)
+
+    // ensure that L is less than or equal to M
+    if(L > M) M = L;
+
     // allocate table
     _table = new fixed_hash_map(M);
 
-    // get number of threads and create announce array FIXME
-    _threads = 3;
-    _announce = new fixed_hash_map* volatile[_threads];
+    // get number of threads and create announce array
+    _num_threads = 1;
+    #ifdef OPENMP
+    _num_threads = omp_get_num_threads();
+    _num_locks = L;
+    _locks = new omp_lock_t[_num_locks];
+    #endif
+
+    _announce = new fixed_hash_map* volatile[_num_threads];
 }
 
 /**
@@ -237,6 +248,7 @@ parallel_hash_map::parallel_hash_map(size_t M)
 parallel_hash_map::~parallel_hash_map()
 {
     delete _table;
+    delete[] _locks;
     delete[] _announce;
 }
 
@@ -254,8 +266,11 @@ parallel_hash_map::~parallel_hash_map()
  */
 bool parallel_hash_map::contains(std::string key)
 {
-    // get thread ID FIXME
+    // get thread ID
     size_t tid = 0;
+    #ifdef OPENMP
+    tid = omp_get_thread_num();
+    #endif
 
     // get pointer to table, announce it will be searched, ensure consistency
     fixed_hash_map *table_ptr;
@@ -290,8 +305,11 @@ bool parallel_hash_map::contains(std::string key)
  */
 int parallel_hash_map::at(std::string key)
 {
-    // get thread ID FIXME
+    // get thread ID
     size_t tid = 0;
+    #ifdef OPENMP
+    tid = omp_get_thread_num();
+    #endif
 
     // get pointer to table, announce it will be searched
     fixed_hash_map *table_ptr;
@@ -329,12 +347,21 @@ void parallel_hash_map::insert(std::string key, int value)
     if(contains(key))
         return;
 
-    // TODO: get lock
+    // get lock hash
+    #ifdef OPENMP
+    size_t lock_hash = std::hash<std::string>()(key) & (_num_locks - 1);
+
+    // acquire lock
+    omp_set_lock(&_locks[lock_hash]);
+    #endif
 
     // insert value
     _table->insert(key, value);
 
-    // TODO: unlock
+    // release lock
+    #ifdef OPENMP
+    omp_unset_lock(&_locks[lock_hash]);
+    #endif
     
     return;
 }
@@ -344,7 +371,11 @@ void parallel_hash_map::insert(std::string key, int value)
 */
 void parallel_hash_map::resize()
 {
-    // TODO: acquire all locks sequentially
+    // acquire all locks in order
+    #ifdef OPENMP
+    for(size_t i=0; i<_num_locks; i++)
+        omp_set_lock(&_locks[i]);
+    #endif 
 
     // recheck if resize needed
     if(2*_table->size() < _table->bucket_count())
@@ -368,10 +399,14 @@ void parallel_hash_map::resize()
     // reassign pointer
     _table = new_map;
 
-    // TODO: release all locks
+    // release all locks
+    #ifdef OPENMP
+    for(size_t i=0; i<_num_locks; i++)
+        omp_unset_lock(&_locks[i]);
+    #endif
 
     // wait for all threads to stop reading from the old table
-    for(int i=0; i<_threads; i++)
+    for(int i=0; i<_num_threads; i++)
         while(_announce[i] == old_table) {};
 
     // free memory associated with old table
@@ -409,8 +444,11 @@ size_t parallel_hash_map::bucket_count()
 */
 std::string* parallel_hash_map::keys()
 {
-    // get thread ID FIXME
+    // get thread ID
     size_t tid = 0;
+    #ifdef OPENMP
+    tid = omp_get_thread_num();
+    #endif
 
     // get pointer to table, announce it will be searched
     fixed_hash_map *table_ptr;
@@ -439,8 +477,11 @@ std::string* parallel_hash_map::keys()
 */
 int* parallel_hash_map::values()
 {
-    // get thread ID FIXME
+    // get thread ID
     size_t tid = 0;
+    #ifdef OPENMP
+    tid = omp_get_thread_num();
+    #endif
 
     // get pointer to table, announce it will be searched
     fixed_hash_map *table_ptr;
@@ -468,8 +509,11 @@ int* parallel_hash_map::values()
  */
 void parallel_hash_map::print_buckets()
 {
-    // get thread ID FIXME
+    // get thread ID
     size_t tid = 0;
+    #ifdef OPENMP
+    tid = omp_get_thread_num();
+    #endif
 
     // get pointer to table, announce it will be searched
     fixed_hash_map *table_ptr;

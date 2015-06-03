@@ -3,6 +3,9 @@
 #include<iostream>
 #include<string>
 #include<functional>
+#ifdef OPENMP
+#include<omp.h>
+#endif
 
 class fixed_hash_map
 {
@@ -38,11 +41,15 @@ class parallel_hash_map
     private:
         fixed_hash_map *_table;
         fixed_hash_map* volatile *_announce;
-        size_t _threads;
+        size_t _num_threads;
+        #ifdef OPENMP
+        omp_lock_t * _locks;
+        size_t _num_locks;
+        #endif
         void resize();
 
     public:
-        parallel_hash_map(size_t M = 8);
+        parallel_hash_map(size_t M = 8, size_t L = 8);
         virtual ~parallel_hash_map();
         bool contains(std::string key);
         int at(std::string key);
