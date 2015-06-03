@@ -24,7 +24,7 @@ class fixed_hash_map
 
     public:
 
-        fixed_hash_map(size_t M = 8);
+        fixed_hash_map(size_t M = 64);
         virtual ~fixed_hash_map();
         bool contains(std::string key);
         int at(std::string key);
@@ -42,6 +42,7 @@ class parallel_hash_map
         fixed_hash_map *_table;
         fixed_hash_map* volatile *_announce;
         size_t _num_threads;
+        size_t _N;
         #ifdef OPENMP
         omp_lock_t * _locks;
         size_t _num_locks;
@@ -49,7 +50,7 @@ class parallel_hash_map
         void resize();
 
     public:
-        parallel_hash_map(size_t M = 8, size_t L = 8);
+        parallel_hash_map(size_t M = 64, size_t L = 64);
         virtual ~parallel_hash_map();
         bool contains(std::string key);
         int at(std::string key);

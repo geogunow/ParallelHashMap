@@ -3,6 +3,14 @@
 
 int main()
 {
+    // set up threads
+    #ifdef OPENMP
+    size_t max_threads = omp_get_num_procs();
+    std::cout << "Requesting " << max_threads << " threads\n";
+    omp_set_num_threads(max_threads);
+    #endif
+
+    // initialize hash map
     parallel_hash_map X = parallel_hash_map();
 
     std::cout << "This should be false ... " << std::endl;
@@ -20,7 +28,7 @@ int main()
     // timing studies
     clock_t t1, t2;
     t1 = clock();
-    
+
     // setup problem
     long num = 1;
     long a = 1664525;
@@ -31,6 +39,11 @@ int main()
     long prime = 997;
     std::string base_string("String_");
     
+    std::cout << "Starting inserts..." << std::endl;
+    #ifdef OPENMP
+    #pragma omp parallel for default(none) \
+    shared(X, m, prime, a, c, len, base_string) private(num)
+    #endif
     for(int i=0; i<len; i++)
     {
         // form key name    
@@ -41,6 +54,12 @@ int main()
         
         X.insert(key, i);
     }
+    std::cout << "Done inserting..." << std::endl;
+
+    #ifdef OPENMP
+    #pragma omp parallel for default(none) \
+    shared(X, len, base_string)
+    #endif
     for(int i=0; i<5*len; i++)
     {
         std::string key = base_string;

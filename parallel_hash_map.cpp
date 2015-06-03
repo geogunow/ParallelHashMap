@@ -120,7 +120,10 @@ void fixed_hash_map::insert(std::string key, int value)
 
     // place element in linked list
     *iter_node = new_node;
-    _N += 1;
+    
+    // increment counter
+    #pragma omp atomic
+    _N++;
 
     return;
 }
@@ -153,19 +156,19 @@ size_t fixed_hash_map::bucket_count()
 std::string* fixed_hash_map::keys()
 {
     // allocate array of strings
-    std::string *keys = new std::string[_N];
+    std::string *key_list = new std::string[_N];
     size_t ind = 0;
     for(int i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
         while(iter_node != NULL)
         {
-            keys[ind] = iter_node->key;
+            key_list[ind] = iter_node->key;
             iter_node = iter_node->next;
             ind++;
         }
     }
-    return keys;
+    return key_list;
 }
 
 /**
@@ -233,7 +236,7 @@ parallel_hash_map::parallel_hash_map(size_t M, size_t L)
     // get number of threads and create announce array
     _num_threads = 1;
     #ifdef OPENMP
-    _num_threads = omp_get_num_threads();
+    _num_threads = omp_get_max_threads();
     _num_locks = L;
     _locks = new omp_lock_t[_num_locks];
     #endif
@@ -364,7 +367,7 @@ void parallel_hash_map::insert(std::string key, int value)
     #ifdef OPENMP
     omp_unset_lock(&_locks[lock_hash]);
     #endif
-    
+   
     return;
 }
 
@@ -381,7 +384,15 @@ void parallel_hash_map::resize()
 
     // recheck if resize needed
     if(2*_table->size() < _table->bucket_count())
+    {
+        // release locks
+        #ifdef OPENMP
+        for(size_t i=0; i<_num_locks; i++)
+            omp_unset_lock(&_locks[i]);
+        #endif 
+
         return;
+    }
 
     // allocate new hash map of double the size
     fixed_hash_map *new_map = new fixed_hash_map(2*_table->bucket_count());
@@ -389,10 +400,9 @@ void parallel_hash_map::resize()
     // get keys, values, and number of elements
     std::string *key_list = _table->keys();
     int *value_list = _table->values();
-    int N = _table->size();
 
     // insert key/value pairs into new hash map
-    for(int i=0; i<N; i++)
+    for(int i=0; i<_table->size(); i++)
         new_map->insert(key_list[i], value_list[i]);
 
     // save pointer of old table
@@ -409,7 +419,9 @@ void parallel_hash_map::resize()
 
     // wait for all threads to stop reading from the old table
     for(int i=0; i<_num_threads; i++)
-        while(_announce[i] == old_table) {};
+        while(_announce[i] == old_table) {
+            std::cout << "WATING" << std::endl;
+        };
 
     // free memory associated with old table
     delete old_table;
@@ -443,7 +455,7 @@ size_t parallel_hash_map::bucket_count()
  *          during access.
  * @return an array of keys in the map whose length is the number of key/value
  *          pairs in the table.
-*/
+ */
 std::string* parallel_hash_map::keys()
 {
     // get thread ID
