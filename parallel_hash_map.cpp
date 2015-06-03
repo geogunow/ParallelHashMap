@@ -1,9 +1,15 @@
 #include"parallel_hash_map.h"
 
-/*
-    TODO: Constructor description
-*/
-closed_hash_map::closed_hash_map(size_t M)
+/**
+ * @brief Constructor initializes fixed-size table of buckets filled with empty
+ *          linked lists.
+ * @details The constructor initializes a fixed-size hash map with the size
+ *          as an input parameter. If no size is given the default size (64)
+ *          is used. Buckets are filled with empty linked lists presented as
+ *          NULL pointers.
+ * @param M size of fixed hash map
+ */
+fixed_hash_map::fixed_hash_map(size_t M)
 {
     // allocate table
     _M = M;
@@ -11,12 +17,13 @@ closed_hash_map::closed_hash_map(size_t M)
     _buckets = new node*[_M]();
 }
 
-/*
-    TODO: Destructor description
-*/
-closed_hash_map::~closed_hash_map()
+/**
+ * @breif Destructor deletes all nodes in the linked lists associate with each
+ *          bucket in the fixed-size table and their pointers.
+ */
+fixed_hash_map::~fixed_hash_map()
 {
-    // FIXME
+    // for each bucket, scan through linked list and delete all nodes
     for(int i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
@@ -27,22 +34,27 @@ closed_hash_map::~closed_hash_map()
             iter_node = next_node;
         }
     } 
-        
+
+    // delete all buckets (now pointers to empty linked lists)
     delete[] _buckets;
 } 
 
-/*
-    TODO: Contains description
-*/
-bool closed_hash_map::contains(std::string key)
+/**
+ * @brief Determine whether the fixed-size table contains a given key
+ * @details The linked list in the bucket associated with the key is searched
+ *             to determine whether the key is present.
+ * @param key to be searched
+ * @return boolean value referring to whether the key is contained in the map
+ */
+bool fixed_hash_map::contains(std::string key)
 {
-    // get hash into table
+    // get hash into table assuming M is a power of 2, using fast modulus
     size_t key_hash = std::hash<std::string>()(key) & (_M-1);
 
+    // search corresponding bucket for key
     node *iter_node = _buckets[key_hash];
     while(iter_node != NULL)
     {
-        //std::cout << "Key = " << iter_node->key << std::endl;
         if(iter_node->key == key)
             return true;
         else
@@ -51,15 +63,21 @@ bool closed_hash_map::contains(std::string key)
     return false;
 }
 
-
-/*
-    TODO: GetVal description
-*/
-int closed_hash_map::at(std::string key)
+/**
+ * @brief Determine the value associated with a given key in the fixed-size
+ *          table.
+ * @details The linked list in the bucket associated with the key is searched
+ *          and once the key is found, the corresponding value is returned.
+ *          An exception is thrown if the key is not present in the map.
+ * @param key whose corresponding value is desired
+ * @return value associated with the given key
+ */
+int fixed_hash_map::at(std::string key)
 {
-    // TODO: optimize hashing
+    // get hash into table assuming M is a power of 2, using fast modulus
     size_t key_hash = std::hash<std::string>()(key) & (_M-1);
 
+    // search bucket for key and return the corresponding value if found
     node *iter_node = _buckets[key_hash];
     while(iter_node != NULL)
         if(iter_node->key == key)
@@ -67,18 +85,25 @@ int closed_hash_map::at(std::string key)
         else
             iter_node = iter_node->next;
     
+    // after the bucket has been completely searched without finding the key,
+    // throw an exception
     throw 20;
 
-    return 0;
+    return -1;
 }
 
 
-/*
-    TODO: Insert description
-*/
-void closed_hash_map::insert(std::string key, int value)
+/**
+ * @brief Insert a key/value pair into the fixed-size table.
+ * @details The specified key value pair is inserted into the fixed-size table.
+ *          If the key already exists in the table, the pair is not inserted
+ *          and the function returns.
+ * @param key of the key/value pair to be inserted
+ * @param value of the key/value pair to be inserted
+ */
+void fixed_hash_map::insert(std::string key, int value)
 {
-    // get hashes -- key_hash assumes M is a power of 2, uses fast modulus
+    // get hash into table assuming M is a power of 2, using fast modulus
     size_t key_hash = std::hash<std::string>()(key) & (_M-1);
 
     // check to see if key already exisits in map
@@ -97,34 +122,39 @@ void closed_hash_map::insert(std::string key, int value)
     *iter_node = new_node;
     _N += 1;
 
-    // unset lock
     return;
 }
 
-/*
-    Returns the number of entries in the map
-*/
-size_t closed_hash_map::size()
+/**
+ * @brief Returns the number of key/value pairs in the fixed-size table
+ * @return number of key/value pairs in the map
+ */
+size_t fixed_hash_map::size()
 {
     return _N;
 }
 
-/*
-    Returns the number of buckets in the map
-*/
-size_t closed_hash_map::bucket_count()
+/**
+ * @brief Returns the number of buckets in the fixed-size table
+ * @return number of buckets in the map
+ */
+size_t fixed_hash_map::bucket_count()
 {
     return _M;
 }
 
-/*
-   Returns an array of the keys in the map
+/**
+ * @brief Returns an array of the keys in the fixed-size table
+ * @details All buckets are scanned in order to form a list of all keys
+ *          present in the table and then the list is returned
+ * @return an array of keys in the map whose length is the number of key/value
+ *          pairs in the table.
 */
-std::string* closed_hash_map::keys()
+std::string* fixed_hash_map::keys()
 {
     // allocate array of strings
     std::string *keys = new std::string[_N];
-    int ind = 0;
+    size_t ind = 0;
     for(int i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
@@ -138,14 +168,19 @@ std::string* closed_hash_map::keys()
     return keys;
 }
 
-/*
-   Returns an array of the values in the map
+/**
+ * @brief Returns an array of the values in the fixed-size table
+ * @details All buckets are scanned in order to form a list of all values
+ *          present in the table and then the list is returned
+ * @return an array of values in the map whose length is the number of 
+ *          key/value pairs in the table.
 */
-int* closed_hash_map::values()
+
+int* fixed_hash_map::values()
 {
     // allocate array of strings
     int *values = new int[_N];
-    int ind = 0;
+    size_t ind = 0;
     for(int i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
@@ -159,8 +194,14 @@ int* closed_hash_map::values()
     return values;
 }
 
-// TODO: Delete
-void closed_hash_map::print_buckets()
+/**
+ * @brief Prints the contents of each bucket to the screen
+ * @details All buckets are scanned and the contents of the buckets are
+ *          printed, which are pointers to linked lists. If the pointer is NULL
+ *          suggesting that the linked list is empty, NULL is printed to the
+ *          screen.
+ */
+void fixed_hash_map::print_buckets()
 {
     for(int i=0; i<_M; i++)
     {
@@ -175,48 +216,118 @@ void closed_hash_map::print_buckets()
     TODO: parallel hash map description
 */
 
-/*
-    TODO: Constructor description
-*/
+/**
+ * @brief Constructor for generates initial underlying table as a fixed-sized 
+ *          hash map and intializes concurrency structures.
+ */
 parallel_hash_map::parallel_hash_map(size_t M)
 {
     // allocate table
-    _table = new closed_hash_map(M);
+    _table = new fixed_hash_map(M);
+
+    // get number of threads and create announce array FIXME
+    _threads = 3;
+    _announce = new fixed_hash_map* volatile[_threads];
 }
 
-/*
-    TODO: Destructor description
-*/
+/**
+ * @breif Destructor frees memory associated with fixed-sized hash map and
+ *          concurrency structures.
+ */
 parallel_hash_map::~parallel_hash_map()
 {
     delete _table;
+    delete[] _announce;
 }
 
-/*
-    TODO: Contains description
-*/
+/**
+ * @brief Determine whether the parallel hash map contains a given key
+ * @details First the thread accessing the table announces its presence and
+ *          which table it is reading. Then the linked list in the bucket 
+ *          associated with the key is searched without setting any locks
+ *          to determine whether the key is present. When the thread has
+ *          finished accessing the table, the announcement is reset to NULL.
+ *          The announcement ensures that the data in the map is not freed
+ *          during a resize until all threads have finished accessing the map.
+ * @param key to be searched
+ * @return boolean value referring to whether the key is contained in the map
+ */
 bool parallel_hash_map::contains(std::string key)
-{ 
-    return _table->contains(key);
+{
+    // get thread ID FIXME
+    size_t tid = 0;
+
+    // get pointer to table, announce it will be searched, ensure consistency
+    fixed_hash_map *table_ptr;
+    do{
+        table_ptr = _table;
+        _announce[tid] = table_ptr;
+    } while(table_ptr != _table);
+
+    // see if current table contians the thread
+    bool present = table_ptr->contains(key);
+    
+    // reset table announcement to not searching
+    _announce[tid] = NULL;
+    
+    return present;
 }
 
-
-/*
-    TODO: GetVal description
-*/
+/**
+ * @brief Determine the value associated with a given key.
+ * @details This function follows the same algorithm as <contains> except that
+ *          the value associated with the searched key is returned.
+ *          First the thread accessing the table announces its presence and
+ *          which table it is reading. Then the linked list in the bucket 
+ *          associated with the key is searched without setting any locks
+ *          to determine the associated value. An exception is thrown if the 
+ *          key is not found. When the thread has finished accessing the table, 
+ *          the announcement is reset to NULL. The announcement ensures that 
+ *          the data in the map is not freed during a resize until all threads 
+ *          have finished accessing the map.
+ * @param key to be searched
+ * @return value associated with the key
+ */
 int parallel_hash_map::at(std::string key)
 {
-    return _table->at(key);
+    // get thread ID FIXME
+    size_t tid = 0;
+
+    // get pointer to table, announce it will be searched
+    fixed_hash_map *table_ptr;
+    do{
+        table_ptr = _table;
+        _announce[tid] = table_ptr;
+    } while(table_ptr != _table);
+
+    // see if current table contians the thread
+    int value = table_ptr->at(key);
+    
+    // reset table announcement to not searching
+    _announce[tid] = NULL;
+    
+    return value;
 }
 
-/*
-    TODO: Insert description
-*/
+/**
+ * @brief Insert a given key/value pair into the parallel hash map.
+ * @details First the underlying table is checked to determine if a resize
+ *          should be conducted. Then, the table is checked to see if it
+ *          already contains the key. If so, the key/value pair is not inserted
+ *          and the function returns. Otherwise, the lock of the associated
+ *          bucket is acquired and the key/value pair is added to the bucket.
+ * @param key of the key/value pair to be inserted
+ * @param value of the key/value pair to be inserted
+ */
 void parallel_hash_map::insert(std::string key, int value)
 {
     // check if resize needed
     if(2*_table->size() > _table->bucket_count())
         resize();
+
+    // check to see if key is already contained in the table
+    if(contains(key))
+        return;
 
     // TODO: get lock
 
@@ -233,10 +344,14 @@ void parallel_hash_map::insert(std::string key, int value)
 */
 void parallel_hash_map::resize()
 {
-    // allocate new hash map of double the size
-    closed_hash_map *new_map = new closed_hash_map(2*_table->bucket_count());
-
     // TODO: acquire all locks sequentially
+
+    // recheck if resize needed
+    if(2*_table->size() < _table->bucket_count())
+        return;
+
+    // allocate new hash map of double the size
+    fixed_hash_map *new_map = new fixed_hash_map(2*_table->bucket_count());
 
     // get keys, values, and number of elements
     std::string *key_list = _table->keys();
@@ -247,52 +362,128 @@ void parallel_hash_map::resize()
     for(int i=0; i<N; i++)
         new_map->insert(key_list[i], value_list[i]);
 
+    // save pointer of old table
+    fixed_hash_map *old_table = _table;
+
     // reassign pointer
     _table = new_map;
 
     // TODO: release all locks
 
+    // wait for all threads to stop reading from the old table
+    for(int i=0; i<_threads; i++)
+        while(_announce[i] == old_table) {};
+
+    // free memory associated with old table
+    delete old_table;
+
     return;
 }
 
-/*
-    Returns the number of entries in the map
-*/
+/**
+ * @brief Returns the number of key/value pairs in the underlying table
+ * @return number of key/value pairs in the map
+ */
 size_t parallel_hash_map::size()
 {
     return _table->size();
 }
 
-/*
-    Returns the number of buckets in the map
-*/
+/**
+ * @brief Returns the number of buckets in the underlying table
+ * @return number of buckets in the map
+ */
 size_t parallel_hash_map::bucket_count()
 {
     return _table->bucket_count();
 }
 
-/*
-   Returns an array of the keys in the map
+/**
+ * @brief Returns an array of the keys in the underlying table
+ * @details All buckets are scanned in order to form a list of all keys
+ *          present in the table and then the list is returned. Threads
+ *          announce their presence to ensure table memory is not freed
+ *          during access.
+ * @return an array of keys in the map whose length is the number of key/value
+ *          pairs in the table.
 */
 std::string* parallel_hash_map::keys()
 {
-    return _table->keys();
+    // get thread ID FIXME
+    size_t tid = 0;
+
+    // get pointer to table, announce it will be searched
+    fixed_hash_map *table_ptr;
+    do{
+        table_ptr = _table;
+        _announce[tid] = table_ptr;
+    } while(table_ptr != _table);
+
+    // get key list
+    std::string* key_list = _table->keys();
+
+    // reset table announcement to not searching
+    _announce[tid] = NULL;
+
+    return key_list;
 }
 
-/*
-   Returns an array of the values in the map
+/**
+ * @brief Returns an array of the values in the underlying table
+ * @details All buckets are scanned in order to form a list of all values
+ *          present in the table and then the list is returned. Threads
+ *          announce their presence to ensure table memory is not freed
+ *          during access.
+ * @return an array of values in the map whose length is the number of key/value
+ *          pairs in the table.
 */
 int* parallel_hash_map::values()
 {
-    return _table->values();
+    // get thread ID FIXME
+    size_t tid = 0;
+
+    // get pointer to table, announce it will be searched
+    fixed_hash_map *table_ptr;
+    do{
+        table_ptr = _table;
+        _announce[tid] = table_ptr;
+    } while(table_ptr != _table);
+
+    // get value list
+    int* value_list = _table->values();
+    
+    // reset table announcement to not searching
+    _announce[tid] = NULL;
+
+    return value_list;
 }
 
-/*
-   Prints contents of buckets in the map
-*/
+/**
+ * @brief Prints the contents of each bucket to the screen
+ * @details All buckets are scanned and the contents of the buckets are
+ *          printed, which are pointers to linked lists. If the pointer is NULL
+ *          suggesting that the linked list is empty, NULL is printed to the
+ *          screen. Threads announce their presence to ensure table memory is
+ *          not freed during access.
+ */
 void parallel_hash_map::print_buckets()
 {
+    // get thread ID FIXME
+    size_t tid = 0;
+
+    // get pointer to table, announce it will be searched
+    fixed_hash_map *table_ptr;
+    do{
+        table_ptr = _table;
+        _announce[tid] = table_ptr;
+    } while(table_ptr != _table);
+
+    // print buckets
     _table->print_buckets();
+
+    // reset table announcement to not searching
+    _announce[tid] = NULL;
+    
     return;
 }
 

@@ -4,7 +4,7 @@
 #include<string>
 #include<functional>
 
-class closed_hash_map
+class fixed_hash_map
 {
     struct node
     {
@@ -21,8 +21,8 @@ class closed_hash_map
 
     public:
 
-        closed_hash_map(size_t M = 8);
-        virtual ~closed_hash_map();
+        fixed_hash_map(size_t M = 8);
+        virtual ~fixed_hash_map();
         bool contains(std::string key);
         int at(std::string key);
         void insert(std::string str, int value);
@@ -36,7 +36,9 @@ class closed_hash_map
 class parallel_hash_map
 {
     private:
-        closed_hash_map *_table;
+        fixed_hash_map *_table;
+        fixed_hash_map* volatile *_announce;
+        size_t _threads;
         void resize();
 
     public:

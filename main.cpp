@@ -3,7 +3,7 @@
 
 int main()
 {
-    closed_hash_map X = closed_hash_map();
+    parallel_hash_map X = parallel_hash_map();
 
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;
