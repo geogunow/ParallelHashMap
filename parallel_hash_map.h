@@ -4,7 +4,7 @@
 #include<string>
 #include<functional>
 
-class parallel_hash_map
+class closed_hash_map
 {
     struct node
     {
@@ -14,28 +14,41 @@ class parallel_hash_map
         node *next;
     };
 
-    struct table
-    {
-        size_t M;          // table size
-        size_t N;          // number of elements present in table
-        node ** buckets;    // buckets of values stored in nodes
-    };
- 
     private:
-        table *_table;   // table of values stored in nodes
-        size_t _threads; // number of threads accessing the table
-        void resize();   // function that resizes hash table to twice the size
+        size_t _M;          // table size
+        size_t _N;          // number of elements present in table
+        node ** _buckets;   // buckets of values stored in nodes
+
     public:
 
-        parallel_hash_map(size_t M = 8);
-        virtual ~parallel_hash_map();
+        closed_hash_map(size_t M = 8);
+        virtual ~closed_hash_map();
         bool contains(std::string key);
-        int getVal(std::string key);
-        void insert(std::string str, int val);
+        int at(std::string key);
+        void insert(std::string str, int value);
         size_t size();
+        size_t bucket_count();
         std::string* keys();
         int* values();
         void print_buckets();
 };
 
+class parallel_hash_map
+{
+    private:
+        closed_hash_map *_table;
+        void resize();
+
+    public:
+        parallel_hash_map(size_t M = 8);
+        virtual ~parallel_hash_map();
+        bool contains(std::string key);
+        int at(std::string key);
+        void insert(std::string str, int value);
+        size_t size();
+        size_t bucket_count();
+        std::string* keys();
+        int* values();
+        void print_buckets();
+};
 #endif

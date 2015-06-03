@@ -3,21 +3,19 @@
 
 int main()
 {
-    parallel_hash_map X = parallel_hash_map();
+    closed_hash_map X = closed_hash_map();
 
-    /*
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;
     std::cout << "This should be true ... " << std::endl;
     X.insert("hello", 5);
     std::cout << X.contains("hello") << std::endl;
     std::cout << "This should be 5 ... " << std::endl;
-    std::cout << X.getVal("hello") << std:: endl;
+    std::cout << X.at("hello") << std:: endl;
     X.insert("hello", 3);
     X.insert("goodbye", 4);
     std::cout << "This should be 4 ... " << std::endl;
-    std::cout << X.getVal("goodbye") << std:: endl;
-    */
+    std::cout << X.at("goodbye") << std:: endl;
 
     // timing studies
     clock_t t1, t2;
@@ -32,6 +30,7 @@ int main()
     std::cout << "Len = " << len << std::endl;
     long prime = 997;
     std::string base_string("String_");
+    
     for(int i=0; i<len; i++)
     {
         // form key name    
@@ -40,10 +39,9 @@ int main()
         std::string key = base_string;
         key += ext;
         
-        std::cout << "Iteration = " << i << std::endl;
         X.insert(key, i);
     }
-    for(int i=0; i<len; i++)
+    for(int i=0; i<5*len; i++)
     {
         std::string key = base_string;
         key += (char) i;
