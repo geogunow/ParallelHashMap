@@ -7,7 +7,7 @@ int main()
     #ifdef OPENMP
     size_t max_threads = omp_get_num_procs();
     std::cout << "Requesting " << max_threads << " threads\n";
-    omp_set_num_threads(max_threads);
+    omp_set_num_threads(1);
     #endif
 
     // initialize hash map
@@ -26,8 +26,9 @@ int main()
     std::cout << X.at("goodbye") << std:: endl;
 
     // timing studies
-    clock_t t1, t2;
-    t1 = clock();
+    //clock_t t1, t2;
+    //t1 = clock();
+    double t1 = omp_get_wtime();
 
     // setup problem
     long num = 1;
@@ -40,26 +41,24 @@ int main()
     std::string base_string("String_");
     
     std::cout << "Starting inserts..." << std::endl;
-    #ifdef OPENMP
-    #pragma omp parallel for default(none) \
+    #pragma omp parallel default(none) \
     shared(X, m, prime, a, c, len, base_string) private(num)
-    #endif
-    for(int i=0; i<len; i++)
     {
-        // form key name    
-        num = (a*num + c) % m;
-        char ext = (char) (num % prime);
-        std::string key = base_string;
-        key += ext;
-        
-        X.insert(key, i);
+        num = prime / (omp_get_thread_num() + 1) + 1;
+        for(int i=0; i<len; i++)
+        {
+            // form key name    
+            num = (a*num + c) % m;
+            char ext = (char) (num % prime);
+            std::string key = base_string;
+            key += ext;
+            
+            X.insert(key, i);
+        }
     }
-    std::cout << "Done inserting..." << std::endl;
 
-    #ifdef OPENMP
     #pragma omp parallel for default(none) \
     shared(X, len, base_string)
-    #endif
     for(int i=0; i<5*len; i++)
     {
         std::string key = base_string;
@@ -67,7 +66,8 @@ int main()
         bool ans = X.contains(key);
     }
 
-    t2 = clock();
+    //t2 = clock();
+    double t2 = omp_get_wtime();
     float diff = (float) t2 - (float) t1;
     std::cout << "Elapsed time = " << diff << std::endl;
     std::cout << "Size = " << X.size() << std::endl;
