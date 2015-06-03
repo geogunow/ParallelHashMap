@@ -248,7 +248,9 @@ parallel_hash_map::parallel_hash_map(size_t M, size_t L)
 parallel_hash_map::~parallel_hash_map()
 {
     delete _table;
+    #ifdef OPENMP  
     delete[] _locks;
+    #endif
     delete[] _announce;
 }
 

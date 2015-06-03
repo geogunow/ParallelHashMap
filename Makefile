@@ -21,7 +21,7 @@ source = \
 main.cpp \
 parallel_hash_map.cpp
 
-obj = $(source:.c=.o)
+obj = $(source:.cpp=.o)
 
 #===============================================================================
 # Sets Flags
@@ -112,7 +112,7 @@ endif
 $(program): $(obj) parallel_hash_map.h
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.c
+%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
