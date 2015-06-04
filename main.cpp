@@ -8,23 +8,24 @@ int main()
     #ifdef OPENMP
     size_t max_threads = omp_get_num_procs();
     std::cout << "Requesting " << max_threads << " threads\n";
+    max_threads = 1;
     omp_set_num_threads(max_threads);
     #endif
 
     // initialize hash map
-    fixed_hash_map<const char*,int> X;// = parallel_hash_map<std::string,int>();
+    parallel_hash_map<char,int> X;// = parallel_hash_map<std::string,int>();
 
     std::cout << "This should be false ... " << std::endl;
-    std::cout << X.contains("hello") << std::endl;
+    std::cout << X.contains('A') << std::endl;
     std::cout << "This should be true ... " << std::endl;
-    X.insert("hello", 5);
-    std::cout << X.contains("hello") << std::endl;
+    X.insert('B', 5);
+    std::cout << X.contains('B') << std::endl;
     std::cout << "This should be 5 ... " << std::endl;
-    std::cout << X.at("hello") << std:: endl;
-    X.insert("hello", 3);
-    X.insert("goodbye", 4);
-    std::cout << "This should be 4 ... " << std::endl;
-    std::cout << X.at("goodbye") << std:: endl;
+    std::cout << X.at('B') << std:: endl;
+    X.insert('C', 3);
+    X.insert('D', 4);
+    std::cout << "This should be 3 ... " << std::endl;
+    std::cout << X.at('C') << std:: endl;
 
     // timing studies
     //clock_t t1, t2;
@@ -39,11 +40,11 @@ int main()
     long len = 0x01 << 20;
     std::cout << "Len = " << len << std::endl;
     long prime = 997;
-    std::string base_string("String_");
+    char base_char = 'a';
 
     std::cout << "Starting inserts..." << std::endl;
     #pragma omp parallel default(none) \
-    shared(X, m, prime, a, c, len, base_string) private(num)
+    shared(X, m, prime, a, c, len, base_char) private(num)
     {
         num = prime / (omp_get_thread_num() + 1) + 1;
         for(int i=0; i<len; i++)
@@ -51,20 +52,20 @@ int main()
             // form key name    
             num = (a*num + c) % m;
             char ext = (char) (num % prime);
-            std::string key = base_string;
+            char key = base_char;
             key += ext;
             
-            X.insert(key.c_str(), i);
+            X.insert(key, i);
         }
     }
 
     #pragma omp parallel for default(none) \
-    shared(X, len, base_string)
+    shared(X, len, base_char)
     for(int i=0; i<5*len; i++)
     {
-        std::string key = base_string;
+        char key = base_char;
         key += (char) i;
-        bool ans = X.contains(key.c_str());
+        bool ans = X.contains(key);
     }
 
     //t2 = clock();
