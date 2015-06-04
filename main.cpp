@@ -7,11 +7,11 @@ int main()
     #ifdef OPENMP
     size_t max_threads = omp_get_num_procs();
     std::cout << "Requesting " << max_threads << " threads\n";
-    omp_set_num_threads(1);
+    omp_set_num_threads(max_threads);
     #endif
 
     // initialize hash map
-    parallel_hash_map X = parallel_hash_map();
+    parallel_hash_map<std::string,int> X;// = parallel_hash_map<std::string,int>();
 
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;

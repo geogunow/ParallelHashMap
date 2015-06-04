@@ -9,7 +9,8 @@
  *          NULL pointers.
  * @param M size of fixed hash map
  */
-fixed_hash_map::fixed_hash_map(size_t M)
+template <typename K, typename V>
+fixed_hash_map<K,V>::fixed_hash_map(size_t M)
 {
     // allocate table
     _M = M;
@@ -21,10 +22,11 @@ fixed_hash_map::fixed_hash_map(size_t M)
  * @breif Destructor deletes all nodes in the linked lists associate with each
  *          bucket in the fixed-size table and their pointers.
  */
-fixed_hash_map::~fixed_hash_map()
+template <typename K, typename V>
+fixed_hash_map<K,V>::~fixed_hash_map<K,V>()
 {
     // for each bucket, scan through linked list and delete all nodes
-    for(int i=0; i<_M; i++)
+    for(size_t i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
         while(iter_node != NULL)
@@ -46,10 +48,11 @@ fixed_hash_map::~fixed_hash_map()
  * @param key to be searched
  * @return boolean value referring to whether the key is contained in the map
  */
-bool fixed_hash_map::contains(std::string key)
+template <typename K, typename V>
+bool fixed_hash_map<K,V>::contains(K key)
 {
     // get hash into table assuming M is a power of 2, using fast modulus
-    size_t key_hash = std::hash<std::string>()(key) & (_M-1);
+    size_t key_hash = std::hash<K>()(key) & (_M-1);
 
     // search corresponding bucket for key
     node *iter_node = _buckets[key_hash];
@@ -72,10 +75,11 @@ bool fixed_hash_map::contains(std::string key)
  * @param key whose corresponding value is desired
  * @return value associated with the given key
  */
-int fixed_hash_map::at(std::string key)
+template <typename K, typename V>
+V fixed_hash_map<K,V>::at(K key)
 {
     // get hash into table assuming M is a power of 2, using fast modulus
-    size_t key_hash = std::hash<std::string>()(key) & (_M-1);
+    size_t key_hash = std::hash<K>()(key) & (_M-1);
 
     // search bucket for key and return the corresponding value if found
     node *iter_node = _buckets[key_hash];
@@ -101,10 +105,11 @@ int fixed_hash_map::at(std::string key)
  * @param key of the key/value pair to be inserted
  * @param value of the key/value pair to be inserted
  */
-void fixed_hash_map::insert(std::string key, int value)
+template <typename K, typename V>
+void fixed_hash_map<K,V>::insert(K key, V value)
 {
     // get hash into table assuming M is a power of 2, using fast modulus
-    size_t key_hash = std::hash<std::string>()(key) & (_M-1);
+    size_t key_hash = std::hash<K>()(key) & (_M-1);
 
     // check to see if key already exisits in map
     if(contains(key))
@@ -132,7 +137,8 @@ void fixed_hash_map::insert(std::string key, int value)
  * @brief Returns the number of key/value pairs in the fixed-size table
  * @return number of key/value pairs in the map
  */
-size_t fixed_hash_map::size()
+template <typename K, typename V>
+size_t fixed_hash_map<K,V>::size()
 {
     return _N;
 }
@@ -141,7 +147,8 @@ size_t fixed_hash_map::size()
  * @brief Returns the number of buckets in the fixed-size table
  * @return number of buckets in the map
  */
-size_t fixed_hash_map::bucket_count()
+template <typename K, typename V>
+size_t fixed_hash_map<K,V>::bucket_count()
 {
     return _M;
 }
@@ -153,12 +160,13 @@ size_t fixed_hash_map::bucket_count()
  * @return an array of keys in the map whose length is the number of key/value
  *          pairs in the table.
 */
-std::string* fixed_hash_map::keys()
+template <typename K, typename V>
+K* fixed_hash_map<K,V>::keys()
 {
-    // allocate array of strings
-    std::string *key_list = new std::string[_N];
+    // allocate array of keys
+    K *key_list = new K[_N];
     size_t ind = 0;
-    for(int i=0; i<_M; i++)
+    for(size_t i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
         while(iter_node != NULL)
@@ -178,13 +186,13 @@ std::string* fixed_hash_map::keys()
  * @return an array of values in the map whose length is the number of 
  *          key/value pairs in the table.
 */
-
-int* fixed_hash_map::values()
+template <typename K, typename V>
+V* fixed_hash_map<K,V>::values()
 {
-    // allocate array of strings
-    int *values = new int[_N];
+    // allocate array of keys
+    V *values = new V[_N];
     size_t ind = 0;
-    for(int i=0; i<_M; i++)
+    for(size_t i=0; i<_M; i++)
     {
         node *iter_node = _buckets[i];
         while(iter_node != NULL)
@@ -204,9 +212,10 @@ int* fixed_hash_map::values()
  *          suggesting that the linked list is empty, NULL is printed to the
  *          screen.
  */
-void fixed_hash_map::print_buckets()
+template <typename K, typename V>
+void fixed_hash_map<K,V>::print_buckets()
 {
-    for(int i=0; i<_M; i++)
+    for(size_t i=0; i<_M; i++)
     {
         if(_buckets[i] == NULL)
             std::cout << i << " -> NULL" << std::endl;
@@ -223,7 +232,8 @@ void fixed_hash_map::print_buckets()
  * @brief Constructor for generates initial underlying table as a fixed-sized 
  *          hash map and intializes concurrency structures.
  */
-parallel_hash_map::parallel_hash_map(size_t M, size_t L)
+template <typename K, typename V>
+parallel_hash_map<K,V>::parallel_hash_map(size_t M, size_t L)
 {
     //TODO: check that L is a power of 2 (round up)
 
@@ -231,7 +241,7 @@ parallel_hash_map::parallel_hash_map(size_t M, size_t L)
     if(L > M) M = L;
 
     // allocate table
-    _table = new fixed_hash_map(M);
+    _table = new fixed_hash_map<K,V>(M);
 
     // get number of threads and create announce array
     _num_threads = 1;
@@ -239,16 +249,19 @@ parallel_hash_map::parallel_hash_map(size_t M, size_t L)
     _num_threads = omp_get_max_threads();
     _num_locks = L;
     _locks = new omp_lock_t[_num_locks];
+    for(size_t i=0; i<_num_locks; i++)
+        omp_init_lock(&_locks[i]);
     #endif
 
-    _announce = new fixed_hash_map* volatile[_num_threads];
+    _announce = new fixed_hash_map<K,V>* volatile[_num_threads];
 }
 
 /**
  * @breif Destructor frees memory associated with fixed-sized hash map and
  *          concurrency structures.
  */
-parallel_hash_map::~parallel_hash_map()
+template <typename K, typename V>
+parallel_hash_map<K,V>::~parallel_hash_map()
 {
     delete _table;
     #ifdef OPENMP  
@@ -269,7 +282,8 @@ parallel_hash_map::~parallel_hash_map()
  * @param key to be searched
  * @return boolean value referring to whether the key is contained in the map
  */
-bool parallel_hash_map::contains(std::string key)
+template <typename K, typename V>
+bool parallel_hash_map<K,V>::contains(K key)
 {
     // get thread ID
     size_t tid = 0;
@@ -278,7 +292,7 @@ bool parallel_hash_map::contains(std::string key)
     #endif
 
     // get pointer to table, announce it will be searched, ensure consistency
-    fixed_hash_map *table_ptr;
+    fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
         _announce[tid] = table_ptr;
@@ -308,7 +322,8 @@ bool parallel_hash_map::contains(std::string key)
  * @param key to be searched
  * @return value associated with the key
  */
-int parallel_hash_map::at(std::string key)
+template <typename K, typename V>
+V parallel_hash_map<K,V>::at(K key)
 {
     // get thread ID
     size_t tid = 0;
@@ -317,14 +332,14 @@ int parallel_hash_map::at(std::string key)
     #endif
 
     // get pointer to table, announce it will be searched
-    fixed_hash_map *table_ptr;
+    fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
         _announce[tid] = table_ptr;
     } while(table_ptr != _table);
 
     // see if current table contians the thread
-    int value = table_ptr->at(key);
+    V value = table_ptr->at(key);
     
     // reset table announcement to not searching
     _announce[tid] = NULL;
@@ -342,7 +357,8 @@ int parallel_hash_map::at(std::string key)
  * @param key of the key/value pair to be inserted
  * @param value of the key/value pair to be inserted
  */
-void parallel_hash_map::insert(std::string key, int value)
+template <typename K, typename V>
+void parallel_hash_map<K,V>::insert(K key, V value)
 {
     // check if resize needed
     if(2*_table->size() > _table->bucket_count())
@@ -354,7 +370,7 @@ void parallel_hash_map::insert(std::string key, int value)
 
     // get lock hash
     #ifdef OPENMP
-    size_t lock_hash = std::hash<std::string>()(key) & (_num_locks - 1);
+    size_t lock_hash = std::hash<K>()(key) & (_num_locks - 1);
 
     // acquire lock
     omp_set_lock(&_locks[lock_hash]);
@@ -374,7 +390,8 @@ void parallel_hash_map::insert(std::string key, int value)
 /*
     TODO: Resize description
 */
-void parallel_hash_map::resize()
+template <typename K, typename V>
+void parallel_hash_map<K,V>::resize()
 {
     // acquire all locks in order
     #ifdef OPENMP
@@ -395,18 +412,19 @@ void parallel_hash_map::resize()
     }
 
     // allocate new hash map of double the size
-    fixed_hash_map *new_map = new fixed_hash_map(2*_table->bucket_count());
+    fixed_hash_map<K,V> *new_map = 
+        new fixed_hash_map<K,V>(2*_table->bucket_count());
 
     // get keys, values, and number of elements
-    std::string *key_list = _table->keys();
-    int *value_list = _table->values();
+    K *key_list = _table->keys();
+    V *value_list = _table->values();
 
     // insert key/value pairs into new hash map
-    for(int i=0; i<_table->size(); i++)
+    for(size_t i=0; i<_table->size(); i++)
         new_map->insert(key_list[i], value_list[i]);
 
     // save pointer of old table
-    fixed_hash_map *old_table = _table;
+    fixed_hash_map<K,V> *old_table = _table;
 
     // reassign pointer
     _table = new_map;
@@ -418,7 +436,7 @@ void parallel_hash_map::resize()
     #endif
 
     // wait for all threads to stop reading from the old table
-    for(int i=0; i<_num_threads; i++)
+    for(size_t i=0; i<_num_threads; i++)
         while(_announce[i] == old_table) {
             std::cout << "WATING" << std::endl;
         };
@@ -433,7 +451,8 @@ void parallel_hash_map::resize()
  * @brief Returns the number of key/value pairs in the underlying table
  * @return number of key/value pairs in the map
  */
-size_t parallel_hash_map::size()
+template <typename K, typename V>
+size_t parallel_hash_map<K,V>::size()
 {
     return _table->size();
 }
@@ -442,7 +461,8 @@ size_t parallel_hash_map::size()
  * @brief Returns the number of buckets in the underlying table
  * @return number of buckets in the map
  */
-size_t parallel_hash_map::bucket_count()
+template <typename K, typename V>
+size_t parallel_hash_map<K,V>::bucket_count()
 {
     return _table->bucket_count();
 }
@@ -456,7 +476,8 @@ size_t parallel_hash_map::bucket_count()
  * @return an array of keys in the map whose length is the number of key/value
  *          pairs in the table.
  */
-std::string* parallel_hash_map::keys()
+template <typename K, typename V>
+K* parallel_hash_map<K,V>::keys()
 {
     // get thread ID
     size_t tid = 0;
@@ -465,14 +486,14 @@ std::string* parallel_hash_map::keys()
     #endif
 
     // get pointer to table, announce it will be searched
-    fixed_hash_map *table_ptr;
+    fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
         _announce[tid] = table_ptr;
     } while(table_ptr != _table);
 
     // get key list
-    std::string* key_list = _table->keys();
+    K* key_list = _table->keys();
 
     // reset table announcement to not searching
     _announce[tid] = NULL;
@@ -488,8 +509,9 @@ std::string* parallel_hash_map::keys()
  *          during access.
  * @return an array of values in the map whose length is the number of key/value
  *          pairs in the table.
-*/
-int* parallel_hash_map::values()
+ */
+template <typename K, typename V>
+V* parallel_hash_map<K,V>::values()
 {
     // get thread ID
     size_t tid = 0;
@@ -498,14 +520,14 @@ int* parallel_hash_map::values()
     #endif
 
     // get pointer to table, announce it will be searched
-    fixed_hash_map *table_ptr;
+    fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
         _announce[tid] = table_ptr;
     } while(table_ptr != _table);
 
     // get value list
-    int* value_list = _table->values();
+    V* value_list = _table->values();
     
     // reset table announcement to not searching
     _announce[tid] = NULL;
@@ -521,7 +543,8 @@ int* parallel_hash_map::values()
  *          screen. Threads announce their presence to ensure table memory is
  *          not freed during access.
  */
-void parallel_hash_map::print_buckets()
+template <typename K, typename V>
+void parallel_hash_map<K,V>::print_buckets()
 {
     // get thread ID
     size_t tid = 0;
@@ -530,7 +553,7 @@ void parallel_hash_map::print_buckets()
     #endif
 
     // get pointer to table, announce it will be searched
-    fixed_hash_map *table_ptr;
+    fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
         _announce[tid] = table_ptr;

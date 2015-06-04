@@ -7,13 +7,14 @@
 #include<omp.h>
 #endif
 
+template <typename K, typename V>
 class fixed_hash_map
 {
     struct node
     {
-        node(std::string k, int v) : next(NULL), key(k), value(v){}
-        std::string key;
-        int value;
+        node(K k, V v) : next(NULL), key(k), value(v){}
+        K key;
+        V value;
         node *next;
     };
 
@@ -26,21 +27,22 @@ class fixed_hash_map
 
         fixed_hash_map(size_t M = 64);
         virtual ~fixed_hash_map();
-        bool contains(std::string key);
-        int at(std::string key);
-        void insert(std::string str, int value);
+        bool contains(K key);
+        V at(K key);
+        void insert(K key, V value);
         size_t size();
         size_t bucket_count();
-        std::string* keys();
-        int* values();
+        K* keys();
+        V* values();
         void print_buckets();
 };
 
+template <typename K, typename V>
 class parallel_hash_map
 {
     private:
-        fixed_hash_map *_table;
-        fixed_hash_map* volatile *_announce;
+        fixed_hash_map<K,V> *_table;
+        fixed_hash_map<K,V>* volatile *_announce;
         size_t _num_threads;
         size_t _N;
         #ifdef OPENMP
@@ -52,13 +54,13 @@ class parallel_hash_map
     public:
         parallel_hash_map(size_t M = 64, size_t L = 64);
         virtual ~parallel_hash_map();
-        bool contains(std::string key);
-        int at(std::string key);
-        void insert(std::string str, int value);
+        bool contains(K key);
+        V at(K key);
+        void insert(K key, V value);
         size_t size();
         size_t bucket_count();
-        std::string* keys();
-        int* values();
+        K* keys();
+        V* values();
         void print_buckets();
 };
 #endif
