@@ -1,5 +1,6 @@
 #include"parallel_hash_map.h"
 #include<time.h>
+#include<string>
 
 int main()
 {
@@ -11,7 +12,7 @@ int main()
     #endif
 
     // initialize hash map
-    fixed_hash_map<std::string,int> X;// = parallel_hash_map<std::string,int>();
+    fixed_hash_map<const char*,int> X;// = parallel_hash_map<std::string,int>();
 
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;
@@ -39,7 +40,7 @@ int main()
     std::cout << "Len = " << len << std::endl;
     long prime = 997;
     std::string base_string("String_");
-    
+
     std::cout << "Starting inserts..." << std::endl;
     #pragma omp parallel default(none) \
     shared(X, m, prime, a, c, len, base_string) private(num)
@@ -53,7 +54,7 @@ int main()
             std::string key = base_string;
             key += ext;
             
-            X.insert(key, i);
+            X.insert(key.c_str(), i);
         }
     }
 
@@ -63,7 +64,7 @@ int main()
     {
         std::string key = base_string;
         key += (char) i;
-        bool ans = X.contains(key);
+        bool ans = X.contains(key.c_str());
     }
 
     //t2 = clock();

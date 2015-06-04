@@ -1,7 +1,6 @@
 #ifndef __PARALLEL_HASH_MAP__
 #define __PARALLEL_HASH_MAP__
 #include<iostream>
-#include<string>
 #include<functional>
 #ifdef OPENMP
 #include<omp.h>
@@ -499,6 +498,10 @@ void parallel_hash_map<K,V>::resize()
     for(size_t i=0; i<_num_locks; i++)
         omp_unset_lock(&_locks[i]);
     #endif
+
+    // delete key and value list
+    delete[] key_list;
+    delete[] value_list;
 
     // wait for all threads to stop reading from the old table
     for(size_t i=0; i<_num_threads; i++)
