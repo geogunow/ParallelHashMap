@@ -18,8 +18,7 @@ BENCHMARK   = no
 program = parallel_hash_map
 
 source = \
-main.cpp \
-parallel_hash_map.cpp
+main.cpp 
 
 obj = $(source:.cpp=.o)
 

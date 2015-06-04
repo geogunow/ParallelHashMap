@@ -11,7 +11,7 @@ int main()
     #endif
 
     // initialize hash map
-    parallel_hash_map<std::string,int> X;// = parallel_hash_map<std::string,int>();
+    fixed_hash_map<std::string,int> X;// = parallel_hash_map<std::string,int>();
 
     std::cout << "This should be false ... " << std::endl;
     std::cout << X.contains("hello") << std::endl;
@@ -71,5 +71,6 @@ int main()
     float diff = (float) t2 - (float) t1;
     std::cout << "Elapsed time = " << diff << std::endl;
     std::cout << "Size = " << X.size() << std::endl;
+    
     return 0;
 }
