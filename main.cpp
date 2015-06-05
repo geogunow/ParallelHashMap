@@ -7,7 +7,7 @@ int main()
     // set up threads
     #ifdef OPENMP
     size_t max_threads = omp_get_num_procs();
-    max_threads = 2;
+    //max_threads = 1;
     std::cout << "Requesting " << max_threads << " threads\n";
     omp_set_num_threads(max_threads);
     #endif
@@ -16,9 +16,12 @@ int main()
     parallel_hash_map<char,int> X;
 
     // timing studies
-    //clock_t t1, t2;
-    //t1 = clock();
-    double t1 = omp_get_wtime();
+    double t1, t2;
+    #ifdef OPENMP
+    t1 = omp_get_wtime();
+    #else
+    t1 = (double) clock() / 1e6;
+    #endif
 
     // setup problem
     long num = 1;
@@ -29,11 +32,12 @@ int main()
     long prime = 997;
 
     std::cout << "Starting inserts..." << std::endl;
-    /*
     #pragma omp parallel default(none) \
     shared(X, m, prime, a, c, len) private(num)
     {
+        #ifdef OPENMP
         num = prime / (omp_get_thread_num() + 1) + 1;
+        #endif
         #pragma omp for
         for(int i=0; i<len; i++)
         {
@@ -43,7 +47,6 @@ int main()
             X.insert(num, i);
         }
     }
-    */
 
     int sum = 0;
     #pragma omp parallel for default(none) \
@@ -55,8 +58,11 @@ int main()
         sum += (int) ans;
     }
 
-    //t2 = clock();
-    double t2 = omp_get_wtime();
+    #ifdef OPENMP
+    t2 = omp_get_wtime();
+    #else
+    t2 = (double) clock() / 1e6;
+    #endif
     float diff = (float) t2 - (float) t1;
     std::cout << "Elapsed time = " << diff << std::endl;
     std::cout << "Size = " << X.size() << std::endl;

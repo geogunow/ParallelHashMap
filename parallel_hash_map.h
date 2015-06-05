@@ -39,9 +39,29 @@ class fixed_hash_map
 template <class K, class V>
 class parallel_hash_map
 {
+    // padded pointer to hash table to avoid false sharing
+    struct paddedPointer
+    {
+        volatile long pad_L1;
+        volatile long pad_L2;
+        volatile long pad_L3;
+        volatile long pad_L4;
+        volatile long pad_L5;
+        volatile long pad_L7;
+        volatile long pad_L8;
+        fixed_hash_map<K,V>* volatile value;
+        volatile long pad_R1;
+        volatile long pad_R2;
+        volatile long pad_R3;
+        volatile long pad_R4;
+        volatile long pad_R5;
+        volatile long pad_R6;
+        volatile long pad_R7;
+        volatile long pad_R8;
+    };
     private:
         fixed_hash_map<K,V> *_table;
-        fixed_hash_map<K,V>* volatile *_announce;
+        paddedPointer *_announce;
         size_t _num_threads;
         size_t _N;
         #ifdef OPENMP
@@ -317,7 +337,7 @@ parallel_hash_map<K,V>::parallel_hash_map(size_t M, size_t L)
         omp_init_lock(&_locks[i]);
     #endif
 
-    _announce = new fixed_hash_map<K,V>* volatile[_num_threads];
+    _announce = new paddedPointer[_num_threads];
 }
 
 /**
@@ -359,14 +379,14 @@ bool parallel_hash_map<K,V>::contains(K key)
     fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
-        _announce[tid] = table_ptr;
+        _announce[tid].value = table_ptr;
     } while(table_ptr != _table);
 
     // see if current table contians the thread
     bool present = table_ptr->contains(key);
     
     // reset table announcement to not searching
-    _announce[tid] = NULL;
+    _announce[tid].value = NULL;
     
     return present;
 }
@@ -399,14 +419,14 @@ V parallel_hash_map<K,V>::at(K key)
     fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
-        _announce[tid] = table_ptr;
+        _announce[tid].vlaue = table_ptr;
     } while(table_ptr != _table);
 
     // see if current table contians the thread
     V value = table_ptr->at(key);
     
     // reset table announcement to not searching
-    _announce[tid] = NULL;
+    _announce[tid].value = NULL;
     
     return value;
 }
@@ -505,9 +525,7 @@ void parallel_hash_map<K,V>::resize()
 
     // wait for all threads to stop reading from the old table
     for(size_t i=0; i<_num_threads; i++)
-        while(_announce[i] == old_table) {
-            std::cout << "WATING" << std::endl;
-        };
+        while(_announce[i].value == old_table) {};
 
     // free memory associated with old table
     delete old_table;
@@ -557,14 +575,14 @@ K* parallel_hash_map<K,V>::keys()
     fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
-        _announce[tid] = table_ptr;
+        _announce[tid].value = table_ptr;
     } while(table_ptr != _table);
 
     // get key list
     K* key_list = _table->keys();
 
     // reset table announcement to not searching
-    _announce[tid] = NULL;
+    _announce[tid].value = NULL;
 
     return key_list;
 }
@@ -591,14 +609,14 @@ V* parallel_hash_map<K,V>::values()
     fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
-        _announce[tid] = table_ptr;
+        _announce[tid].value = table_ptr;
     } while(table_ptr != _table);
 
     // get value list
     V* value_list = _table->values();
     
     // reset table announcement to not searching
-    _announce[tid] = NULL;
+    _announce[tid].value = NULL;
 
     return value_list;
 }
@@ -624,14 +642,14 @@ void parallel_hash_map<K,V>::print_buckets()
     fixed_hash_map<K,V> *table_ptr;
     do{
         table_ptr = _table;
-        _announce[tid] = table_ptr;
+        _announce[tid].value = table_ptr;
     } while(table_ptr != _table);
 
     // print buckets
     _table->print_buckets();
 
     // reset table announcement to not searching
-    _announce[tid] = NULL;
+    _announce[tid].value = NULL;
     
     return;
 }
