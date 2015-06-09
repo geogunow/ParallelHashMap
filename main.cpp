@@ -12,7 +12,7 @@ int main()
     #endif
 
     // initialize hash map
-    parallel_hash_map<char,int> X;
+    parallel_hash_map<long,int> X;
 
     // timing studies
     double t1, t2;
@@ -42,9 +42,7 @@ int main()
         {
             // form key name    
             num = (a*num + c) % m;
-            char key = (char) num;
-
-            X.insert(key, i);
+            X.insert(num, i);
         }
     }
 
@@ -54,8 +52,8 @@ int main()
     reduction(+:sum)
     for(int i=0; i<5*len; i++)
     {
-        char key = (char) i;
-        int ans = X.at(key);
+        long key = (long) i;
+        int ans = (int) X.at(key);
         sum += ans;
     }
 
