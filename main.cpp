@@ -42,8 +42,9 @@ int main()
         {
             // form key name    
             num = (a*num + c) % m;
-            
-            X.insert(num, i);
+            char key = (char) num;
+
+            X.insert(key, i);
         }
     }
 
@@ -53,8 +54,9 @@ int main()
     reduction(+:sum)
     for(int i=0; i<5*len; i++)
     {
-        bool ans = X.contains(i);
-        sum += (int) ans;
+        char key = (char) i;
+        int ans = X.at(key);
+        sum += ans;
     }
 
     #ifdef OPENMP
@@ -65,6 +67,7 @@ int main()
     float diff = (float) t2 - (float) t1;
     std::cout << "Elapsed time = " << diff << std::endl;
     std::cout << "Size = " << X.size() << std::endl;
-    
+   
+
     return 0;
 }

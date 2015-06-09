@@ -222,9 +222,7 @@ V fixed_hash_map<K,V>::at(K key)
     
     // after the bucket has been completely searched without finding the key,
     // throw an exception
-    throw 20;
-
-    return val;
+    throw std::domain_error("Key not present in map");
 }
 
 
