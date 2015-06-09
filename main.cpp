@@ -7,7 +7,6 @@ int main()
     // set up threads
     #ifdef OPENMP
     size_t max_threads = omp_get_num_procs();
-    //max_threads = 1;
     std::cout << "Requesting " << max_threads << " threads\n";
     omp_set_num_threads(max_threads);
     #endif
